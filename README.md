@@ -1,27 +1,66 @@
 # HR Workflow Designer (React Flow)
 
-A visual workflow builder inspired by tools like Excalidraw, designed to create and simulate HR processes.
+## Overview
+
+The HR Workflow Designer is a visual workflow-building tool that allows users to design, configure, and simulate HR processes such as onboarding, approvals, and automated actions.
+
+The application provides an interactive canvas where users can create nodes, connect them, and define workflow logic in a structured and intuitive way.
 
 ---
 
 ## Features
 
-- Create workflow nodes:
-  - Start
-  - Task
-  - Approval
-  - Automated
-  - End
+### Workflow Canvas
 
-- Drag and connect nodes with directional edges
+- Interactive drag-and-drop canvas
+- Create and position workflow nodes
+- Connect nodes with directed edges
+- Smooth curved connections with arrow indicators
 
-- Edit node properties dynamically
+Supported node types:
+- Start
+- Task
+- Approval
+- Automated
+- End
 
-- Simulate workflow execution
+---
 
-- Export workflows:
-  - JSON format
-  - Image (JPG)
+### Node Configuration
+
+Each node can be configured dynamically through a side panel.
+
+- Update node title in real-time
+- Reflect changes instantly on the canvas
+- Clean separation between UI and node data
+
+---
+
+### Workflow Simulation
+
+- Simulates execution of workflow steps
+- Validates presence of Start node
+- Displays step-by-step execution logs
+- Helps visualize workflow behavior
+
+---
+
+### Export Functionality
+
+- Export workflow as JSON file
+- Export canvas as image (JPG)
+- Enables sharing and persistence
+
+---
+
+## Architecture
+
+The application follows a modular frontend architecture:
+
+- React Flow handles graph rendering and interactions
+- React Hooks manage state (nodes, edges, selection)
+- Custom node components define UI
+- Utility functions handle export and simulation
 
 ---
 
@@ -29,14 +68,8 @@ A visual workflow builder inspired by tools like Excalidraw, designed to create 
 
 - React.js
 - React Flow
-- HTML Canvas (html2canvas)
+- html2canvas
 
 ---
 
-## Installation
-
-```bash
-git clone https://github.com/your-username/HR-Workflow-Designer-React-Flow-
-cd HR-Workflow-Designer-React-Flow-
-npm install
-npm run dev
+## Project Structure
