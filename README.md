@@ -73,3 +73,14 @@ The application follows a modular frontend architecture:
 ---
 
 ## Project Structure
+src/
+├── App.jsx
+├── main.jsx
+├── index.css
+---
+
+## Setup Instructions
+
+```bash
+npm install
+npm run dev
