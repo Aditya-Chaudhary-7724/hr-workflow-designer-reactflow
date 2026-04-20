@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import ReactFlow, {
   addEdge,
   Background,
@@ -10,35 +10,23 @@ import ReactFlow, {
   Position,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import html2canvas from "html2canvas";
 
-/* ================= MOCK API ================= */
-const mockAPI = {
-  getAutomations: async () => [
-    { id: "send_email", label: "Send Email" },
-    { id: "generate_doc", label: "Generate Doc" },
-  ],
-  simulate: async (workflow) =>
-    workflow.nodes.map((n, i) => ({
-      step: i + 1,
-      message: `${n.data.label} executed`,
-    })),
-};
-
-/* ================= NODE ================= */
+/* NODE */
 const CustomNode = ({ data }) => (
   <div
     style={{
       padding: 16,
-      borderRadius: 12,
-      background: "#fff",
+      borderRadius: 10,
+      background: "#ffffff",
       border: "2px solid #6366f1",
-      minWidth: 160,
+      minWidth: 180,
       textAlign: "center",
     }}
   >
     <Handle type="target" position={Position.Top} />
-    <strong>{data.label}</strong>
-    <div style={{ fontSize: 12 }}>
+    <div style={{ fontWeight: 600 }}>{data.label}</div>
+    <div style={{ fontSize: 13, color: "#555" }}>
       {data.title || "No config"}
     </div>
     <Handle type="source" position={Position.Bottom} />
@@ -47,39 +35,27 @@ const CustomNode = ({ data }) => (
 
 const nodeTypes = { custom: CustomNode };
 
-/* ================= APP ================= */
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selected, setSelected] = useState(null);
   const [logs, setLogs] = useState([]);
-  const [automations, setAutomations] = useState([]);
+  const [counter, setCounter] = useState(0);
 
-  useEffect(() => {
-    mockAPI.getAutomations().then(setAutomations);
-  }, []);
-
-  /* ADD NODE */
+  /* ADD NODE (SPREAD POSITION) */
   const addNode = (type) => {
-    const node = {
+    const newNode = {
       id: Date.now().toString(),
       type: "custom",
       position: {
-        x: window.innerWidth / 2 - 100,
-        y: window.innerHeight / 2 - 100,
+        x: 100 + (counter % 5) * 200,
+        y: 100 + Math.floor(counter / 5) * 150,
       },
-      data: { label: type },
+      data: { label: type, title: "" },
     };
-    setNodes((n) => [...n, node]);
-  };
 
-  /* UPDATE */
-  const updateNode = (data) => {
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.id === selected.id ? { ...n, data: { ...n.data, ...data } } : n
-      )
-    );
+    setCounter((c) => c + 1);
+    setNodes((n) => [...n, newNode]);
   };
 
   /* CONNECT */
@@ -88,27 +64,46 @@ export default function App() {
       addEdge(
         {
           ...params,
-          markerEnd: { type: MarkerType.ArrowClosed },
           type: "smoothstep",
+          markerEnd: { type: MarkerType.ArrowClosed },
         },
         eds
       )
     );
 
   /* RUN */
-  const run = async () => {
-    const res = await mockAPI.simulate({ nodes, edges });
-    setLogs(res);
+  const run = () => {
+    if (!nodes.find((n) => n.data.label === "Start")) {
+      alert("Add Start node first");
+      return;
+    }
+
+    const result = nodes.map((n, i) => ({
+      step: i + 1,
+      message: `${n.data.label} executed`,
+    }));
+
+    setLogs(result);
   };
 
-  /* EXPORT */
+  /* EXPORT JSON */
   const exportJSON = () => {
-    const data = JSON.stringify({ nodes, edges }, null, 2);
-    const blob = new Blob([data]);
+    const blob = new Blob([JSON.stringify({ nodes, edges }, null, 2)]);
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "workflow.json";
     a.click();
+  };
+
+  /* EXPORT IMAGE */
+  const exportImage = () => {
+    const el = document.querySelector(".react-flow");
+    html2canvas(el).then((canvas) => {
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = "workflow.png";
+      a.click();
+    });
   };
 
   return (
@@ -116,20 +111,18 @@ export default function App() {
       style={{
         width: "100vw",
         height: "100vh",
+        background: "#0f172a",
         overflow: "hidden",
-        position: "fixed",
-        top: 0,
-        left: 0,
       }}
     >
-      {/* 🔥 TOOLBAR */}
+      {/* TOOLBAR */}
       <div
         style={{
-          position: "fixed",
-          top: 10,
+          position: "absolute",
+          top: 15,
           left: "50%",
           transform: "translateX(-50%)",
-          background: "#fff",
+          background: "#1e293b",
           padding: 10,
           borderRadius: 10,
           display: "flex",
@@ -138,16 +131,33 @@ export default function App() {
         }}
       >
         {["Start", "Task", "Approval", "Automated", "End"].map((t) => (
-          <button key={t} onClick={() => addNode(t)}>
-            + {t}
+          <button
+            key={t}
+            onClick={() => addNode(t)}
+            style={{
+              padding: "6px 10px",
+              background: "#334155",
+              color: "white",
+              border: "none",
+              borderRadius: 6,
+              cursor: "pointer",
+            }}
+          >
+            {t}
           </button>
         ))}
-        <button onClick={run}>▶ Run</button>
-        <button onClick={exportJSON}>💾 Export</button>
+
+        <button onClick={run} style={{ background: "#4f46e5", color: "white" }}>
+          Run
+        </button>
+
+        <button onClick={exportJSON}>JSON</button>
+        <button onClick={exportImage}>JPG</button>
       </div>
 
-      {/* 🔥 CANVAS */}
+      {/* CANVAS */}
       <ReactFlow
+        style={{ width: "100%", height: "100%" }}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -156,90 +166,69 @@ export default function App() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        fitView
-        panOnDrag={false}
-        panOnScroll={false}
-        minZoom={0.8}
-        maxZoom={1.5}
+        fitView={false}
       >
         <Background />
         <Controls />
       </ReactFlow>
 
-      {/* 🔥 RIGHT PANEL */}
+      {/* CONFIG PANEL */}
       {selected && (
         <div
           style={{
-            position: "fixed",
+            position: "absolute",
             right: 20,
             top: 80,
-            background: "#fff",
-            padding: 20,
-            borderRadius: 12,
-            width: 260,
-            boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+            background: "#1e293b",
+            padding: 15,
+            borderRadius: 10,
+            width: 240,
+            color: "white",
           }}
         >
           <h3>{selected.data.label}</h3>
 
           <input
-            placeholder="Title"
-            value={selected.data.title || ""}
-            onChange={(e) =>
-              updateNode({ title: e.target.value })
-            }
-            style={{ width: "100%", marginBottom: 10 }}
+            value={selected.data.title}
+            onChange={(e) => {
+              const val = e.target.value;
+
+              setNodes((nds) =>
+                nds.map((n) =>
+                  n.id === selected.id
+                    ? { ...n, data: { ...n.data, title: val } }
+                    : n
+                )
+              );
+
+              setSelected((prev) => ({
+                ...prev,
+                data: { ...prev.data, title: val },
+              }));
+            }}
+            style={{
+              width: "100%",
+              padding: 8,
+              borderRadius: 6,
+              border: "none",
+            }}
           />
-
-          {selected.data.label === "Task" && (
-            <>
-              <input
-                placeholder="Description"
-                onChange={(e) =>
-                  updateNode({ description: e.target.value })
-                }
-                style={{ width: "100%", marginBottom: 10 }}
-              />
-              <input
-                placeholder="Assignee"
-                onChange={(e) =>
-                  updateNode({ assignee: e.target.value })
-                }
-                style={{ width: "100%" }}
-              />
-            </>
-          )}
-
-          {selected.data.label === "Automated" && (
-            <select
-              onChange={(e) =>
-                updateNode({ action: e.target.value })
-              }
-              style={{ width: "100%" }}
-            >
-              {automations.map((a) => (
-                <option key={a.id}>{a.label}</option>
-              ))}
-            </select>
-          )}
         </div>
       )}
 
-      {/* 🔥 LOG */}
+      {/* LOG */}
       <div
         style={{
-          position: "fixed",
+          position: "absolute",
           bottom: 0,
           right: 0,
-          background: "#111",
+          background: "#020617",
           color: "white",
           padding: 10,
-          width: 280,
-          maxHeight: 200,
-          overflow: "auto",
+          width: 240,
         }}
       >
-        <h4>Execution Log</h4>
+        <strong>Execution Log</strong>
         {logs.map((l, i) => (
           <div key={i}>{l.message}</div>
         ))}
